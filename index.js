@@ -30,6 +30,16 @@ function operation() {
 
     if(action === 'Criar Conta') {
       typeAccount();
+    } else if(action === 'Consultar Saldo') {
+
+    } else if(action === 'Depositar') {
+      const actionAccount = action;
+      typeAccount(actionAccount);
+    } else if(action === 'Sacar') {
+      
+    } else if('Sair') {
+      console.log(chalk.bgBlue.black('\n Obrigado por usar o caixa eltrônico 24 Horas. \n'));
+      process.exit();
     };
   
   })
@@ -46,13 +56,13 @@ function createAccount() {
 
 };
 
-function typeAccount() {
+function typeAccount(actionAccount) {
 
   inquirer.prompt([
     {
       type: 'list',
       name: 'typeAccount',
-      message: 'Qual o tipo de conta você deseja criar?',
+      message: 'Escolha abaixo o tipo de conta que desejar realizar a operação:',
       choices: [
         'Conta Corrente', 
         'Conta Poupanca'
@@ -63,10 +73,22 @@ function typeAccount() {
     const typeAccount = answer['typeAccount'];
     switch(typeAccount) {
       case 'Conta Corrente':
-        createCheckingAccount();
+        if(actionAccount === 'Depositar') {
+          const folderName = 'checkingAccounts/';
+          const typeAccount = 'Conta Corrente';
+          deposit(folderName, typeAccount);
+        } else {
+          createCheckingAccount();
+        }
         break;
       case 'Conta Poupanca':
-        createSavingAccount();
+        if(actionAccount === 'Depositar') {
+          const folderName = 'savingAccounts/';
+          const typeAccount = 'Conta Poupança';
+          deposit(folderName, typeAccount);
+        } else {
+          createSavingAccount();
+        }
       break;
       default:
         console.log('Opção inválida');
@@ -161,3 +183,34 @@ function createSavingAccount() {
   })
   .catch(err => console.log(err));
 };
+
+// depositar dinheiro
+function deposit(folderName, typeAccount) {
+
+  inquirer.prompt([
+    {
+      name: 'accountName',
+      message: 'Qual o número da sua conta?'
+    }
+  ]).then((answer) => {
+    const accountName = answer['accountName'];
+
+    // verificar se a conta existe
+    if(!checkAccount(folderName, typeAccount, accountName)) {
+      return deposit(folderName, typeAccount);
+    }
+
+  })
+  .catch(err => console.log(err));
+};
+
+// helper para verificar se a conta existe
+function checkAccount(folderName, typeAccount, accountName) {
+  if(!fs.existsSync(`${folderName}${accountName}.json`)) {
+    console.log(chalk.bgRed.black('Essa ' + `${typeAccount}` + ' não existe, tente novamente. '));
+    return false;
+  }
+
+  return true;
+}
+
