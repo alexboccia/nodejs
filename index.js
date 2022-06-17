@@ -4,18 +4,22 @@ const inquirer = require('inquirer');
 
 // módulo interno (core)
 const fs = require('fs');
+const { constants } = require('buffer');
 
 // inicializando o programa
 operation();
 
 function operation() {
-  console.log(chalk.bgGreenBright.black(" CAIXA ELETRÔNICO 24 HORAS \n"));
+  
+  console.log('\n---------------------------------------------------------------------------------------------\n');
+  console.log(chalk.greenBright("MENU PRINCIPAL -> CAIXA ELETRÔNICO EM NODEJS \n"));
+  console.log('---------------------------------------------------------------------------------------------\n');
 
   inquirer.prompt([
     {
       type: 'list',
       name: 'action',
-      message: 'Selecione uma das opções abaixo:',
+      message: chalk.greenBright('SELECIONE UMA DAS OPÇÕES ABAIXO:'),
       choices: [
         'Criar Conta', 
         'Consultar Saldo', 
@@ -29,16 +33,21 @@ function operation() {
     const action = answer['action'];
 
     if(action === 'Criar Conta') {
-      typeAccount();
+      typeAccount(action);
+
     } else if(action === 'Consultar Saldo') {
+      selectAccountType();
 
     } else if(action === 'Depositar') {
-      const actionAccount = action;
-      typeAccount(actionAccount);
+      typeAccount(action);
+
     } else if(action === 'Sacar') {
-      
+      typeAccount(action);
+
     } else if('Sair') {
-      console.log(chalk.bgBlue.black('\n Obrigado por usar o caixa eltrônico 24 Horas. \n'));
+      console.log('\n---------------------------------------------------------------------------------------------');
+      console.log(chalk.greenBright('\n OBRIGADO POR UTILIZAR O CAIXA ELETRÔNICO EM NODEJS.\n'));
+      console.log('---------------------------------------------------------------------------------------------\n');
       process.exit();
     };
   
@@ -62,7 +71,7 @@ function typeAccount(actionAccount) {
     {
       type: 'list',
       name: 'typeAccount',
-      message: 'Escolha abaixo o tipo de conta que desejar realizar a operação:',
+      message: 'SELECIONE O TIPO DE CONTA:',
       choices: [
         'Conta Corrente', 
         'Conta Poupanca'
@@ -74,20 +83,31 @@ function typeAccount(actionAccount) {
     switch(typeAccount) {
       case 'Conta Corrente':
         if(actionAccount === 'Depositar') {
-          const folderName = 'checkingAccounts/';
-          const typeAccount = 'Conta Corrente';
+          let folderName = 'checkingAccounts/';
+          let typeAccount = 'Conta Corrente';
           deposit(folderName, typeAccount);
-        } else {
+        } else if(actionAccount === 'Criar Conta') {
           createCheckingAccount();
+        } else if(actionAccount === 'Sacar') {
+          let folderName = 'checkingAccounts/';
+          let typeAccount = 'Conta Corrente';
+          withDraw(folderName, typeAccount);
         }
         break;
       case 'Conta Poupanca':
+        
         if(actionAccount === 'Depositar') {
-          const folderName = 'savingAccounts/';
-          const typeAccount = 'Conta Poupança';
+          let folderName = 'savingAccounts/';
+          let typeAccount = 'Conta Poupança';
           deposit(folderName, typeAccount);
-        } else {
-          createSavingAccount();
+
+        } else if(actionAccount === 'Criar Conta') {
+          createCheckingAccount();
+
+        } else if(actionAccount === 'Sacar') {
+          let folderName = 'savingAccounts/';
+          let typeAccount = 'Conta Poupança';
+          withDraw(folderName, typeAccount);
         }
       break;
       default:
@@ -103,13 +123,11 @@ function createCheckingAccount() {
   inquirer.prompt([
     {
       name: "createCheckingAccount",
-      message: "Digite o número da sua conta:",
+      message: "DIGITE O NÚMERO DA CONTA:",
     }
   ])
   .then((answer) => {
     const createCheckingAccount = answer['createCheckingAccount'];
-
-    console.log('\n---------------------------------------------------------------------------------------------\n');
 
     // criar diretório para armazenar contas
     if(!fs.existsSync('checkingAccounts')) {
@@ -118,7 +136,11 @@ function createCheckingAccount() {
 
     // validar se o nome da conta já existe
     if(fs.existsSync(`checkingAccounts/${createCheckingAccount}.json`)) {
-      console.log(chalk.bgRed.black('Este número de conta já existe!'));
+
+      console.log('\n---------------------------------------------------------------------------------------------\n');
+      console.log(chalk.redBright(`OPS! O NÚMERO DE CONTA "${createCheckingAccount}" JÁ EXISTE! TENTE OUTRO NÚMERO.`));
+      console.log('\n---------------------------------------------------------------------------------------------\n');
+
       return typeAccount();
     };
 
@@ -146,13 +168,11 @@ function createSavingAccount() {
   inquirer.prompt([
     {
       name: "createSavingAccount",
-      message: "Digite o número da sua conta:",
+      message: "DIGITE O NÚMERO DA CONTA:",
     }
   ])
   .then((answer) => {
     const createSavingAccount = answer['createSavingAccount'];
-
-    console.log('\n---------------------------------------------------------------------------------------------\n');
 
     // criar diretório para armazenar contas
     if(!fs.existsSync('savingAccounts')) {
@@ -161,7 +181,11 @@ function createSavingAccount() {
 
     // validar se o nome da conta já existe
     if(fs.existsSync(`savingAccounts/${createSavingAccount}.json`)) {
-      console.log(chalk.bgRed.black('Este número de conta já existe!'));
+
+      console.log('\n---------------------------------------------------------------------------------------------\n');
+      console.log(chalk.redBright(`OPS! O NÚMERO DE CONTA "${createSavingAccount}" JÁ EXISTE! TENTE OUTRO NÚMERO.`));
+      console.log('\n---------------------------------------------------------------------------------------------\n');
+
       return typeAccount();
     };
 
@@ -174,7 +198,8 @@ function createSavingAccount() {
     });
 
     // mensagem de criaçào da conta
-    console.log(chalk.green(`CONTA POUPANÇA: ${createSavingAccount}, foi criada com sucesso! \n`));
+    console.log('\n---------------------------------------------------------------------------------------------\n');
+    console.log(chalk.green(`CONTA POUPANÇA: ${createSavingAccount}, FOI CRIADA COM SUCESSO!\n`));
     console.log('---------------------------------------------------------------------------------------------\n');
 
     // retorna para o índice de operações
@@ -190,7 +215,7 @@ function deposit(folderName, typeAccount) {
   inquirer.prompt([
     {
       name: 'accountName',
-      message: 'Qual o número da sua conta?'
+      message: 'DIGITE O NÚMERO DA CONTA:'
     }
   ]).then((answer) => {
     const accountName = answer['accountName'];
@@ -200,17 +225,302 @@ function deposit(folderName, typeAccount) {
       return deposit(folderName, typeAccount);
     }
 
+    // adicionar valor na conta
+    inquirer.prompt([
+      {
+        name: 'amount',
+        message: 'INFORME O VALOR DO DEPÓSITO:',
+      },
+    ])
+    .then((answer) => {
+
+      const amount = answer['amount'];
+      
+      // add an amount
+      if(typeAccount === 'Conta Corrente'){
+        addAmount('checkingAccounts', accountName, amount);
+      } else if(typeAccount === 'Conta Poupança') {
+        addAmount('savingAccounts', accountName, amount);
+      }
+
+      operation();
+
+    })
+    .catch(err => console.log(err));
+
   })
   .catch(err => console.log(err));
 };
 
 // helper para verificar se a conta existe
 function checkAccount(folderName, typeAccount, accountName) {
-  if(!fs.existsSync(`${folderName}${accountName}.json`)) {
-    console.log(chalk.bgRed.black('Essa ' + `${typeAccount}` + ' não existe, tente novamente. '));
+
+  if(!fs.existsSync(`${folderName}/${accountName}.json`)) {
+
+    console.log('\n---------------------------------------------------------------------------------------------\n');
+    console.log(chalk.redBright(`A CONTA CORRENTE NÚMERO ${accountName} NÃO EXISTE, TENTE NOVAMENTE.\n`));
+    console.log('---------------------------------------------------------------------------------------------\n');
+
     return false;
   }
 
   return true;
 }
 
+function addAmount(folderName, accountName, amount) {
+
+  let accountData = folderName === 'checkingAccounts' ? getAccount(accountName) : getAccountSavings(accountName);
+
+  if(!amount) {
+    console.log(chalk.bgRed.black('Ocorreu um erro, tente novamente'));
+    console.log(`addAmount: ${folderName} / ${accountName} R$ ${amount}`);
+    return deposit();
+  }
+
+  accountData.balance = parseFloat(amount) + parseFloat(accountData.balance);
+
+  fs.writeFileSync(
+    `${folderName}/${accountName}.json`,
+    JSON.stringify(accountData),
+    function(err) {
+      console.log(err)
+    },
+  );
+
+  const convertCurrency = parseFloat(amount).toFixed();
+
+  console.log('\n---------------------------------------------------------------------------------------------\n');
+  console.log(chalk.green(`VALOR DE R$${convertCurrency},00 FOI DEPOSITADO EM SUA CONTA!\n`));
+  console.log('---------------------------------------------------------------------------------------------\n');
+
+}
+
+// ler o arquivo conta corrente
+function getAccount(accountName) {
+  
+  if(fs.existsSync(`checkingAccounts/${accountName}.json`)) {
+    const accountJSON = fs.readFileSync(`checkingAccounts/${accountName}.json`, {
+      encoding: 'utf8',
+      flag: 'r',
+    });
+    return JSON.parse(accountJSON);
+  }
+
+}
+
+// ler o arquivo conta poupanca
+function getAccountSavings(accountName) {
+
+  if(fs.existsSync(`savingAccounts/${accountName}.json`)) {
+    const accountJSON = fs.readFileSync(`savingAccounts/${accountName}.json`, {
+      encoding: 'utf8',
+      flag: 'r',
+    });
+    return JSON.parse(accountJSON);
+  }
+
+}
+
+// exibir o valor da conta
+function getAccountBalance(typeAccount) {
+  
+  if(typeAccount === 'Conta Corrente') {
+    inquirer.prompt ([
+      {
+        name: 'accountName',
+        message: 'INFORME O NÚMERO DA CONTA CORRENTE?',
+      },
+    ])
+    .then(answer => {
+      const accountName = answer['accountName'];
+      const accountData = getAccount(accountName);
+
+      // validar se o nome da conta já existe
+      if(fs.existsSync(`checkingAccounts/${accountName}.json`)) {
+        
+        console.log('\n---------------------------------------------------------------------------------------------');
+        console.log(chalk.greenBright(`\n SALDO NA CONTA CORRENTE É DE R$${accountData.balance} \n`));
+        console.log('---------------------------------------------------------------------------------------------\n');
+
+        inquirer.prompt([
+          {
+            type: 'list',
+            name: 'action',
+            message: 'SELECIONE UMA DAS OPÇÕES:',
+            choices: [
+              'Consultar Novo Saldo', 
+              'Retornar ao Menu Principal'
+            ],
+          }
+        ])
+        .then((answer) => {
+          const action = answer['action'];
+
+          if(action === 'Consultar Novo Saldo') {
+            selectAccountType();
+          } else {
+            operation();
+          }
+        })
+        .catch(err => console.log(err));
+
+      } else {
+
+        console.log('\n---------------------------------------------------------------------------------------------\n');
+        console.log(chalk.redBright(`ESTE NÚMERO DE CONTA ${accountName} NÁO EXISTE! TENTE NOVAMENTE.\n`));
+        console.log('---------------------------------------------------------------------------------------------\n');
+
+        return getAccountBalance(typeAccount);
+      };
+
+    })
+    .catch(err => console.log(err));
+    
+  }
+
+  if(typeAccount === 'Conta Poupanca') {
+    
+    inquirer.prompt ([
+      {
+        name: 'accountName',
+        message: 'INFORME O NÚMERO DA CONTA POUPANÇA?',
+      },
+    ])
+    .then(answer => {
+      const accountName = answer['accountName'];
+      const accountData = getAccountSavings(accountName);
+
+      // validar se o nome da conta já existe
+      if(fs.existsSync(`savingAccounts/${accountName}.json`)) {
+
+        const convertCurrency = parseFloat(accountData.balance).toFixed(2);
+        
+        console.log('\n---------------------------------------------------------------------------------------------');
+        console.log(chalk.greenBright(`\n SALDO NA CONTA POUPANÇA É DE R$${convertCurrency} \n`));
+        console.log('---------------------------------------------------------------------------------------------\n');
+
+        inquirer.prompt([
+          {
+            type: 'list',
+            name: 'action',
+            message: 'SELECIONE UMA DAS OPÇÕES:',
+            choices: [
+              'Consultar Novo Saldo', 
+              'Retornar ao Menu Principal'
+            ],
+          }
+        ])
+        .then((answer) => {
+          const action = answer['action'];
+
+          if(action === 'Consultar Novo Saldo') {
+            selectAccountType();
+          } else {
+            operation();
+          }
+        })
+        .catch(err => console.log(err));
+
+      } else {
+
+        console.log('\n---------------------------------------------------------------------------------------------\n');
+        console.log(chalk.redBright(`A ${action} NÚMERO ${accountName} NÃO EXISTE, TENTE NOVAMENTE.\n`));
+        console.log('---------------------------------------------------------------------------------------------\n');
+
+        return getAccountBalance(typeAccount);
+      };
+
+    })
+    .catch(err => console.log(err));
+    
+  }
+
+}
+
+// tipo de conta para consultar
+function selectAccountType() {
+
+  inquirer.prompt([
+    {
+      type: 'list',
+      name: 'typeAccount',
+      message: 'SELECIONE O TIPO DE CONTA:',
+      choices: [
+        'Conta Corrente', 
+        'Conta Poupanca'
+      ],
+    },
+  ])
+  .then(answer => {
+    const typeAccount = answer['typeAccount'];
+    switch(typeAccount) {
+      case 'Conta Corrente':
+        getAccountBalance(typeAccount);
+        break;
+      case 'Conta Poupanca':
+        getAccountBalance(typeAccount);
+      break;
+      default:
+        console.log('Opção inválida');
+    }
+  })
+  .catch(err => console.log(err));
+
+};
+
+// sacar valor da conta
+function withDraw(folderName, typeAccount) {
+
+  inquirer.prompt([
+    {
+      name: "accountName",
+      message: "INFORME O NÚMERO DA CONTA: "
+    }
+  ]).then((answer) => {
+
+    const accountName = answer['accountName'];
+
+    // verificar se a conta existe
+    if(!checkAccount(folderName, typeAccount, accountName)) {
+      return withDraw();
+    }
+
+    inquirer.prompt([
+      {
+        name: "amount",
+        message: "INFORME O VALOR QUE DESEJA SACAR:"
+      }
+    ])
+    .then((answer) => {
+      const amount = answer['amount'];
+
+      removeAmount(accountName, amount);
+
+    })
+    .catch(err => console.log(err));
+
+  }).catch(err => console.console(err));
+}
+
+function removeAmount(accountName, amount) {
+  
+  const accountData = getAccount(accountName);
+
+  if(!amount) {
+
+    console.log('\n---------------------------------------------------------------------------------------------\n');
+    console.log(chalk.redBright(`INFORME UM VALOR VÁLIDO.\n`));
+    console.log('---------------------------------------------------------------------------------------------\n');
+  
+    return withDraw();
+  }
+
+  if(accountData.balance < amount) {
+
+    console.log('\n---------------------------------------------------------------------------------------------\n');
+    console.log(chalk.redBright(`O VALOR R$${amount} É ACIMA DO SALDO EM CONTA. TENTE NOVAMENTE.\n`));
+    console.log('---------------------------------------------------------------------------------------------\n');
+
+    return withDraw();
+  }
+}
