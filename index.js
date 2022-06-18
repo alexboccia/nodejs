@@ -95,19 +95,18 @@ function typeAccount(actionAccount) {
         }
         break;
       case 'Conta Poupanca':
-        
         if(actionAccount === 'Depositar') {
           let folderName = 'savingAccounts/';
           let typeAccount = 'Conta Poupança';
           deposit(folderName, typeAccount);
 
         } else if(actionAccount === 'Criar Conta') {
-          createCheckingAccount();
+          createSavingAccount();
 
         } else if(actionAccount === 'Sacar') {
           let folderName = 'savingAccounts/';
-          let typeAccount = 'Conta Poupança';
-          withDraw(folderName, typeAccount);
+          let typeAccountName = 'Conta Poupança';
+          withDraw(folderName, typeAccountName);
         }
       break;
       default:
@@ -153,6 +152,7 @@ function createCheckingAccount() {
     });
 
     // mensagem de criaçào da conta
+    console.log('\n---------------------------------------------------------------------------------------------\n');
     console.log(chalk.green(`CONTA CORRENTE: ${createCheckingAccount}, foi criada com sucesso! \n`));
     console.log('---------------------------------------------------------------------------------------------\n');
 
@@ -290,7 +290,7 @@ function addAmount(folderName, accountName, amount) {
   const convertCurrency = parseFloat(amount).toFixed();
 
   console.log('\n---------------------------------------------------------------------------------------------\n');
-  console.log(chalk.green(`VALOR DE R$${convertCurrency},00 FOI DEPOSITADO EM SUA CONTA!\n`));
+  console.log(chalk.green(`VALOR DE R$${parseFloat(convertCurrency).toFixed(2)} FOI DEPOSITADO EM SUA CONTA!\n`));
   console.log('---------------------------------------------------------------------------------------------\n');
 
 }
@@ -328,7 +328,7 @@ function getAccountBalance(typeAccount) {
     inquirer.prompt ([
       {
         name: 'accountName',
-        message: 'INFORME O NÚMERO DA CONTA CORRENTE?',
+        message: 'INFORME O NÚMERO DA CONTA CORRENTE:',
       },
     ])
     .then(answer => {
@@ -339,30 +339,10 @@ function getAccountBalance(typeAccount) {
       if(fs.existsSync(`checkingAccounts/${accountName}.json`)) {
         
         console.log('\n---------------------------------------------------------------------------------------------');
-        console.log(chalk.greenBright(`\n SALDO NA CONTA CORRENTE É DE R$${accountData.balance} \n`));
+        console.log(chalk.greenBright(`\n SALDO NA CONTA CORRENTE É DE R$${parseFloat(accountData.balance).toFixed(2)} \n`));
         console.log('---------------------------------------------------------------------------------------------\n');
 
-        inquirer.prompt([
-          {
-            type: 'list',
-            name: 'action',
-            message: 'SELECIONE UMA DAS OPÇÕES:',
-            choices: [
-              'Consultar Novo Saldo', 
-              'Retornar ao Menu Principal'
-            ],
-          }
-        ])
-        .then((answer) => {
-          const action = answer['action'];
-
-          if(action === 'Consultar Novo Saldo') {
-            selectAccountType();
-          } else {
-            operation();
-          }
-        })
-        .catch(err => console.log(err));
+        operation();
 
       } else {
 
@@ -469,7 +449,7 @@ function selectAccountType() {
 };
 
 // sacar valor da conta
-function withDraw(folderName, typeAccount) {
+function withDraw(folderName, typeAccountName) {
 
   inquirer.prompt([
     {
@@ -481,8 +461,8 @@ function withDraw(folderName, typeAccount) {
     const accountName = answer['accountName'];
 
     // verificar se a conta existe
-    if(!checkAccount(folderName, typeAccount, accountName)) {
-      return withDraw();
+    if(!checkAccount(folderName, typeAccountName, accountName)) {
+      return typeAccount('Sacar');
     }
 
     inquirer.prompt([
@@ -494,7 +474,7 @@ function withDraw(folderName, typeAccount) {
     .then((answer) => {
       const amount = answer['amount'];
 
-      removeAmount(accountName, amount);
+      removeAmount(folderName, typeAccountName, accountName, amount);
 
     })
     .catch(err => console.log(err));
@@ -502,9 +482,9 @@ function withDraw(folderName, typeAccount) {
   }).catch(err => console.console(err));
 }
 
-function removeAmount(accountName, amount) {
-  
-  const accountData = getAccount(accountName);
+function removeAmount(folderName, typeAccountName, accountName, amount) {
+
+  const accountData = typeAccountName === 'Conta Corrente' ? getAccount(accountName) : getAccountSavings(accountName);
 
   if(!amount) {
 
@@ -512,15 +492,32 @@ function removeAmount(accountName, amount) {
     console.log(chalk.redBright(`INFORME UM VALOR VÁLIDO.\n`));
     console.log('---------------------------------------------------------------------------------------------\n');
   
-    return withDraw();
+    return typeAccount('Sacar');
   }
 
   if(accountData.balance < amount) {
 
     console.log('\n---------------------------------------------------------------------------------------------\n');
-    console.log(chalk.redBright(`O VALOR R$${amount} É ACIMA DO SALDO EM CONTA. TENTE NOVAMENTE.\n`));
+    console.log(chalk.redBright(`O VALOR R$${parseFloat(amount).toFixed(00)} É ACIMA DO SALDO EM CONTA. TENTE NOVAMENTE.\n`));
     console.log('---------------------------------------------------------------------------------------------\n');
 
-    return withDraw();
+    return typeAccount('Sacar');
   }
+
+  accountData.balance = parseFloat(accountData.balance) - parseFloat(amount);
+
+  fs.writeFileSync(
+    `${folderName}/${accountName}.json`,
+    JSON.stringify(accountData),
+    function(err) {
+      console.log(err)
+    },
+  );
+
+  console.log('\n---------------------------------------------------------------------------------------------\n');
+  console.log(chalk.greenBright(`SAQUE DE R$${parseFloat(amount).toFixed(2)} EFETUADO COM SUCESSO.\n`));
+  console.log('---------------------------------------------------------------------------------------------\n');
+
+  operation();
+
 }
